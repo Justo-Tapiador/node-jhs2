@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><?= title ?></title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { color: #2c3e50; }
+    ul { line-height: 2; }
+    .badge { background: #27ae60; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+    .warning { color: #e74c3c; }
+  </style>
+</head>
+<body>
+
+  <h1><?= heading ?></h1>
+
+  <?jhs if (user.isAdmin) { ?>
+    <p>Hello, <strong><?= user.name ?></strong>! <span class="badge">Admin</span></p>
+  <?jhs } else { ?>
+    <p>Hello, <strong><?= user.name ?></strong>!</p>
+  <?jhs } ?>
+
+  <?jhs if (items && items.length > 0) { ?>
+    <h2>Features</h2>
+    <ul>
+      <?jhs items.forEach((item, index) => { ?>
+        <li><?= (index + 1) ?>. <?= item ?></li>
+      <?jhs }); ?>
+    </ul>
+  <?jhs } else { ?>
+    <p class="warning">No features listed.</p>
+  <?jhs } ?>
+
+  <?jhs
+    const now = new Date();
+    const timestamp = now.toISOString();
+  ?>
+  <footer>
+    <hr>
+    <small>Rendered at: <?= timestamp ?> | NODE-JHS Template Engine</small>
+  </footer>
+
+</body>
+</html>

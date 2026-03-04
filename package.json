@@ -1,0 +1,37 @@
+{
+  "name": "node-jhs2",
+  "version": "2.0.0",
+  "description": "A dynamic template engine for Node.js using <?jhs ?> delimiters — PHP-like syntax with JavaScript and XSS protection.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test/engine.test.js",
+    "example": "node examples/server.js"
+  },
+  "keywords": [
+    "template",
+    "template-engine",
+    "jhs",
+    "html",
+    "nodejs",
+    "server-side-rendering",
+    "xss",
+    "vm",
+    "dynamic",
+    "views"
+  ],
+  "author": "Justo Tapiador",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Justo-Tapiador/NODE-JHS2.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Justo-Tapiador/NODE-JHS2/issues"
+  },
+  "homepage": "https://github.com/Justo-Tapiador/NODE-JHS2#readme",
+  "dependencies": {},
+  "devDependencies": {}
+}
