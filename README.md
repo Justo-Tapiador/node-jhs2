@@ -337,7 +337,10 @@ Pull requests are welcome. For major changes, open an issue first.
 5. Open a Pull Request
 
 ---
-
+- [jhs-instantiator](https://github.com/Justo-Tapiador/jhs-instantiator) — 
+  Hierarchical Instantiator companion module: progressively degrades 
+  multi-rank JHS templates down to plain HTML.
+  
 ## License
 
 MIT — see [LICENSE](LICENSE) for details.
