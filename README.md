@@ -1,4 +1,4 @@
-# NODE-JHS2
+<img width="1100" height="860" alt="node-jhs" src="https://github.com/user-attachments/assets/5eb90692-affe-412f-859f-73f28f710da0" />
 
 A dynamic template engine for Node.js that lets you embed JavaScript directly in HTML files using `<?jhs ... ?>` delimiters — similar to PHP, but powered by JavaScript.
 
