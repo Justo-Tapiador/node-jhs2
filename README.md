@@ -1,8 +1,8 @@
 <img width="256" alt="node-jhs" src="https://github.com/user-attachments/assets/5eb90692-affe-412f-859f-73f28f710da0" />
 
-A dynamic template engine for Node.js that lets you embed JavaScript directly in HTML files using `<?jhs ... ?>` delimiters — similar to PHP, but powered by JavaScript.
-
-**NODE-JHS2** is a complete rewrite of [node-jhs](https://github.com/YOUR_USERNAME/node-jhs), with improved security, sandboxed execution, XSS protection, and a cleaner API.
+## What is
+**NODE-JHS2** is a dynamic template engine for Node.js that lets you embed JavaScript directly in HTML files using `<?jhs ... ?>` delimiters — similar to PHP, but powered by JavaScript.
+It is a complete rewrite of [node-jhs](https://github.com/YOUR_USERNAME/node-jhs), with improved security, sandboxed execution, XSS protection, and a cleaner API.
 
 Template files use the `.jhs` extension and integrate seamlessly with native Node.js HTTPS servers and custom middleware chains.
 
