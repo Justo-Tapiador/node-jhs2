@@ -49,7 +49,7 @@ npm install node-jhs2
 Or clone and use locally:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/NODE-JHS2.git
+git clone https://github.com/Justo-Tapiador/node-jhs2.git
 ```
 
 ---
