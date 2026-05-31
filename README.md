@@ -2,6 +2,7 @@
 
 ## What is it?
 **NODE-JHS2** is a dynamic template engine for Node.js that lets you embed JavaScript directly in HTML files using `<?jhs ... ?>` delimiters — similar to PHP, but powered by JavaScript.
+
 It is a complete rewrite of [node-jhs](https://github.com/YOUR_USERNAME/node-jhs), with improved security, sandboxed execution, XSS protection, and a cleaner API.
 
 Template files use the `.jhs` extension and integrate seamlessly with native Node.js HTTPS servers and custom middleware chains.
