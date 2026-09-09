@@ -64,19 +64,30 @@ class JSTemplateEngine {
       ? templatePath
       : path.join(this.options.viewsPath, templatePath);
 
-    // Return from cache if available
+    // Return from cache if available and the file has not changed since
+    // compilation (mtime revalidation: edit a template, save, render again —
+    // no clearCache() or restart needed).
     if (this.options.cache && this.templateCache.has(fullPath)) {
-      const compiledFn = this.templateCache.get(fullPath);
-      return await this._executeTemplate(compiledFn, data, fullPath);
+      const cached = this.templateCache.get(fullPath);
+      let unchanged = false;
+      try {
+        unchanged = fs.statSync(fullPath).mtimeMs === cached.mtime;
+      } catch (e) { /* file vanished: fall through and let readFile report it */ }
+      if (unchanged) {
+        return await this._executeTemplate(cached.compiledFn, data, fullPath);
+      }
+      this.templateCache.delete(fullPath); // stale entry — recompile below
     }
 
     // Read and compile the template
     const templateContent = await fs.promises.readFile(fullPath, this.options.encoding);
     const compiledFn = this._compile(templateContent);
 
-    // Store in cache if caching is enabled
+    // Store in cache if caching is enabled (with mtime for hot reload)
     if (this.options.cache) {
-      this.templateCache.set(fullPath, compiledFn);
+      let mtime = null;
+      try { mtime = fs.statSync(fullPath).mtimeMs; } catch (e) {}
+      this.templateCache.set(fullPath, { compiledFn, mtime });
     }
 
     return await this._executeTemplate(compiledFn, data, fullPath);
@@ -144,9 +155,12 @@ class JSTemplateEngine {
 (function() {
   let __output = "";
 
-  // echo() — writes escaped output directly from code blocks
+  // echo() — writes escaped output directly from code blocks.
+  // __jhsEchoPart (injected into the sandbox context by the engine) unwraps
+  // raw() sentinels and escapes everything else — mirroring the
+  // wallermax-server Rust port.
   function echo(...args) {
-    __output += args.map(arg => __escape(String(arg))).join('');
+    __output += args.map(__jhsEchoPart).join('');
   }
 
   ${code}
@@ -169,11 +183,17 @@ class JSTemplateEngine {
     function RawString(str) { this.value = String(str); }
 
     // Build the sandbox context: data + allowed globals + helpers
+    const escapeFn = this.options.autoEscape
+      ? (val) => (val instanceof RawString ? val.value : this._escapeHtml(val))
+      : (str) => (str instanceof RawString ? str.value : str);
     const context = {
       ...data,
-      __escape: this.options.autoEscape
-        ? (val) => (val instanceof RawString ? val.value : this._escapeHtml(val))
-        : (str) => (str instanceof RawString ? str.value : str),
+      __escape: escapeFn,
+      // echo() argument mapper: raw() sentinels pass through unescaped,
+      // everything else goes through __escape(String(arg)) — the same
+      // mechanism and quirks as the wallermax-server Rust port.
+      __jhsEchoPart: (arg) =>
+        arg instanceof RawString ? arg.value : escapeFn(String(arg)),
       require: this.require_filter,
       Buffer: Buffer,
       // include() — renders another template, inheriting parent data

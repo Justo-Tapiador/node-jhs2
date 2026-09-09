@@ -4,6 +4,9 @@
  */
 
 const assert = require('assert');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const JSTemplateEngine = require('../index');
 
 let passed = 0;
@@ -126,6 +129,52 @@ async function test(name, fn) {
     const rawEngine = new JSTemplateEngine({ cache: false, autoEscape: false });
     const out = await rawEngine.renderString('<?= val ?>', { val: '<b>bold</b>' });
     assert.strictEqual(out, '<b>bold</b>');
+  });
+
+  console.log('\n── raw() in echo() ──────────────────────────────────────');
+
+  await test('echo(raw()) prints trusted markup unescaped', async () => {
+    const out = await engine.renderString('<?jhs echo(raw(msg)); ?>', { msg: '<b>bold</b>' });
+    assert.strictEqual(out, '<b>bold</b>');
+  });
+
+  await test('mixed trust: raw() markup + escapeHtml() data', async () => {
+    const tpl = '<?jhs echo(raw("<li>" + escapeHtml(item) + "</li>")); ?>';
+    const out = await engine.renderString(tpl, { item: '<script>x</script>' });
+    assert.strictEqual(out, '<li>&lt;script&gt;x&lt;/script&gt;</li>');
+  });
+
+  await test('raw() + concatenation keeps the [object Object] quirk (as documented)', async () => {
+    const out = await engine.renderString('<?= raw("a") + "b" ?>', {});
+    assert.strictEqual(out, '[object Object]b');
+  });
+
+  console.log('\n── Cache + mtime hot reload ──────────────────────────────');
+
+  await test('cached template is reused until its mtime changes', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'jhs2-test-'));
+    const file = path.join(dir, 'hot.jhs');
+    try {
+      fs.writeFileSync(file, 'v1');
+      const hotEngine = new JSTemplateEngine({ cache: true, viewsPath: dir });
+
+      let compiles = 0;
+      const origCompile = hotEngine._compile.bind(hotEngine);
+      hotEngine._compile = (src) => { compiles++; return origCompile(src); };
+
+      assert.strictEqual(await hotEngine.render('hot.jhs'), 'v1');
+      assert.strictEqual(await hotEngine.render('hot.jhs'), 'v1');
+      assert.strictEqual(compiles, 1); // second render hit the cache
+
+      fs.writeFileSync(file, 'v2');
+      const later = new Date(Date.now() + 2000); // guarantee a different mtime
+      fs.utimesSync(file, later, later);
+
+      assert.strictEqual(await hotEngine.render('hot.jhs'), 'v2'); // hot reload
+      assert.strictEqual(compiles, 2);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   // ---------------------------------------------------------------------------

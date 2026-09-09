@@ -1,6 +1,6 @@
 {
   "name": "node-jhs2",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A dynamic template engine for Node.js using <?jhs ?> delimiters — PHP-like syntax with JavaScript and XSS protection.",
   "main": "index.js",
   "scripts": {

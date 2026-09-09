@@ -4,6 +4,36 @@ All notable changes to NODE-JHS2 will be documented in this file.
 
 ---
 
+## [2.1.0] — 2026-09-09
+
+Parity patch with the wallermax-server Rust port: same `__jhsEchoPart`
+mechanism for `echo()`, same mtime hot-reload semantics for the cache.
+No breaking changes — template syntax and the public API are untouched.
+
+### Fixed
+
+- `echo(raw(...))` now prints trusted markup unescaped. Previously the
+  sentinel was flattened by `String()` before `__escape()` could see it,
+  so `echo(raw("<b>bold</b>"))` rendered `[object Object]`.
+  `<?= raw(...) ?>` was already correct in 2.0.0.
+- Template cache is now revalidated against the file's `mtime` on every
+  render: edit a `.jhs` file, save, render again — the new content is
+  picked up without `clearCache()` or a process restart. Previously a
+  cached template served its first compiled version forever.
+
+### Added
+
+- `__jhsEchoPart` helper in the sandbox context (the `echo()` argument
+  mapper, mirroring the Rust port; data keys cannot shadow it).
+- Cache entries now store `{ compiledFn, mtime }` instead of the bare
+  compiled string (only relevant if you inspected `templateCache`
+  directly).
+- Tests for `echo(raw())`, mixed-trust output (`raw()` markup +
+  `escapeHtml()` data), the `[object Object]` concatenation quirk, and
+  mtime-based hot reload.
+
+---
+
 ## [2.0.0] — 2026-03-04
 
 This is a complete rewrite of [node-jhs v1](https://github.com/YOUR_USERNAME/node-jhs).
