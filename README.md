@@ -27,12 +27,56 @@ Template files use the `.jhs` extension and integrate seamlessly with native Nod
 
 ---
 
+## What's new in v2.1.0
+
+| Feature | v2.0.0 | v2.1.0 |
+|---|---|---|
+| `echo(raw(...))` | rendered `[object Object]` | ✅ prints trusted markup, unescaped |
+| Template cache | stale until `clearCache()` or restart | ✅ revalidated against the file's `mtime` (hot reload) |
+| Unit tests | 13 | 17 |
+
+`<?= raw(...) ?>` already bypassed escaping in v2.0.0 — v2.1.0 extends the same sentinel to `echo()`, matching the wallermax-server Rust port.
+
+### `echo(raw(...))` — trusted markup inside code blocks
+
+Wrap the **markup** in `raw()`, keep the **data** escaped with `escapeHtml()`:
+
+```html
+<?jhs
+  users.forEach(user => {
+    echo(raw('<li>' + escapeHtml(user.name) + '</li>\n'));
+  });
+?>
+```
+
+> ⚠️ `raw()` returns a sentinel object: concatenate **inside** the call. `raw(a) + b` flattens the sentinel and renders `[object Object]b`.
+
+### Hot reload via `mtime`
+
+With `cache: true` (the default), every render re-checks the cached file's modification time and recompiles automatically when it changes — edit a template, save, render again: no `clearCache()`, no restart.
+
+```js
+await engine.render('page.jhs', data);   // compiles and caches
+// ...edit views/page.jhs on disk...
+await engine.render('page.jhs', data);   // recompiles — fresh content
+```
+
+### See it in action
+
+```bash
+node demo-raw-mtime.js
+```
+
+The demo script at the repo root prints nine numbered checks: escaped vs raw output, `echo(raw())`, the mixed-trust pattern, the `[object Object]` quirk, `require('url')` inside a template, and the mtime hot reload.
+
+---
+
 ## Features
 
 - 🔖 **PHP-like syntax** — use `<?jhs ... ?>` to run JavaScript inside HTML
 - `<?= expr ?>` shorthand for outputting values
 - 🛡️ **Auto XSS protection** — HTML escaping enabled by default
-- ⚡ **Template caching** — compiled templates are cached for performance
+- ⚡ **Template caching with hot reload** — compiled templates are cached and revalidated against the file's `mtime`
 - 🔒 **Sandboxed execution** — templates run inside a Node.js `vm` context
 - 📦 **`require` filtering** — block dangerous or unwanted modules
 - 🔁 **`include()` support** — embed sub-templates with shared data
@@ -151,13 +195,19 @@ https.createServer({
 
 ```html
 <?= raw('<strong>Bold</strong>') ?>
+
+<?jhs echo(raw('<strong>Bold</strong>')); ?>
 ```
+
+> Since v2.1.0, `echo()` accepts `raw()` sentinels as well — see [What's new in v2.1.0](#whats-new-in-v210).
 
 ### Echo function
 
 ```html
 <?jhs echo('Hello ', username, '!'); ?>
 ```
+
+> `echo()` escapes its arguments, just like `<?= ?>`. To print trusted markup from a code block, wrap it in `raw()`: `echo(raw('<li>item</li>'))`.
 
 ---
 
@@ -215,7 +265,7 @@ See the full working example in [`examples/https-server.js`](examples/https-serv
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `viewsPath` | `string` | `./views` | Directory where `.jhs` template files are stored |
-| `cache` | `boolean` | `true` | Cache compiled templates in memory |
+| `cache` | `boolean` | `true` | Cache compiled templates in memory (revalidated against file `mtime`) |
 | `openTag` | `string` | `<?jhs` | Opening tag for code blocks |
 | `closeTag` | `string` | `?>` | Closing tag |
 | `echoTag` | `string` | `<?=` | Opening tag for output expressions |
@@ -245,6 +295,8 @@ const html = await engine.renderString('<p><?= msg ?></p>', { msg: 'Hi!' });
 
 Clears the in-memory template cache.
 
+> Since v2.1.0 the cache revalidates itself against each file's `mtime`, so picking up template edits no longer requires `clearCache()` — it remains useful for freeing memory or forcing recompilation.
+
 ### `JSTemplateEngine.clearRequireCache(pattern)`
 
 Clears Node.js `require` cache entries matching a pattern (useful in development).
@@ -269,10 +321,12 @@ All values output via `<?= ?>` or `echo()` are HTML-escaped by default:
 | `"` | `&quot;` |
 | `'` | `&#039;` |
 
-Use `raw()` to output trusted HTML without escaping:
+Use `raw()` to output trusted HTML without escaping — and pair it with `escapeHtml()` for any data inside it (the mixed-trust pattern):
 
 ```html
 <?= raw(trustedHtmlString) ?>
+
+<?jhs echo(raw('<li>' + escapeHtml(userInput) + '</li>')); ?>
 ```
 
 ### Sandboxed VM Execution
@@ -314,6 +368,7 @@ NODE-JHS2/
 ├── LICENSE
 ├── .gitignore
 ├── CHANGELOG.md
+├── demo-raw-mtime.js            # Runnable demo: raw() sentinel + mtime hot reload
 ├── examples/
 │   ├── https-server.js         # Full middleware-based HTTPS server example
 │   ├── server.js               # Minimal HTTPS server example
@@ -322,7 +377,7 @@ NODE-JHS2/
 │       └── partials/
 │           └── nav.jhs
 └── test/
-    └── engine.test.js          # Unit tests (13 tests)
+    └── engine.test.js          # Unit tests (17 tests)
 ```
 
 ---
