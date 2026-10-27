@@ -151,7 +151,7 @@ class JSTemplateEngine {
     }
 
     // Wrap everything in an IIFE so `return` works correctly
-    const wrappedCode = `
+   /* const wrappedCode = `
 (function() {
   let __output = "";
 
@@ -159,6 +159,18 @@ class JSTemplateEngine {
   // __jhsEchoPart (injected into the sandbox context by the engine) unwraps
   // raw() sentinels and escapes everything else — mirroring the
   // wallermax-server Rust port.
+  function echo(...args) {
+    __output += args.map(__jhsEchoPart).join('');
+  }
+
+  ${code}
+
+  return __output;
+})()`;*/
+const wrappedCode = `
+(async function() {
+  let __output = "";
+
   function echo(...args) {
     __output += args.map(__jhsEchoPart).join('');
   }
@@ -196,6 +208,8 @@ class JSTemplateEngine {
         arg instanceof RawString ? arg.value : escapeFn(String(arg)),
       require: this.require_filter,
       Buffer: Buffer,
+      fetch: globalThis.fetch?.bind(globalThis),
+      AbortSignal: globalThis.AbortSignal,
       // include() — renders another template, inheriting parent data
       include: async (includePath, includeData = {}) => {
         return await this.render(includePath, { ...data, ...includeData });
@@ -213,7 +227,7 @@ class JSTemplateEngine {
       });
 
       vm.createContext(context);
-      const result = script.runInContext(context);
+      const result = await script.runInContext(context);
 
       this.options.scriptname = previousScriptName;
       return result;
